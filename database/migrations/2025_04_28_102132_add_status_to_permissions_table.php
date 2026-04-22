@@ -12,7 +12,19 @@ return new class extends Migration {
     {
         Schema::table('permissions', function (Blueprint $table) {
             if (!Schema::hasColumn('permissions', 'status')) {
-                $table->string('status')->nullable(); // Add 'status' column
+                Schema::table('permissions', function (Blueprint $table) {
+                    $table->enum('status', ['Active', 'In Active'])
+                        ->default('Active')
+                        ->after('guard_name');
+                });
+            } else {
+                // Column exists but has no default — fix it
+                Schema::table('permissions', function (Blueprint $table) {
+                    $table->enum('status', ['Active', 'In Active'])
+                        ->default('Active')
+                        ->after('guard_name')
+                        ->change();
+                });
             }
         });
     }
@@ -24,7 +36,9 @@ return new class extends Migration {
     {
         Schema::table('permissions', function (Blueprint $table) {
             if (Schema::hasColumn('permissions', 'status')) {
-                $table->dropColumn('status');
+                Schema::table('permissions', function (Blueprint $table) {
+                    $table->dropColumn('status');
+                });
             }
         });
     }

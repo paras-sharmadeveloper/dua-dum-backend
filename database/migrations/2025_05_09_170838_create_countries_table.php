@@ -11,13 +11,18 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('countries', function (Blueprint $table) {
-            $table->id(); // Equivalent to: id INT PRIMARY KEY AUTO_INCREMENT
-            $table->unsignedBigInteger('country_id');
-            $table->string('city_name', 100);
-            $table->string('regions')->nullable();
+            $table->id();
+            $table->string('iso', 100);
+            $table->string('name', 100);
+            $table->string('nicename', 100);
+            $table->string('iso3', 100);
+            $table->string('numcode', 100);
+            $table->string('phonecode', 100);
             $table->timestamps(); // created_at and updated_at
         });
     }
+
+
 
     /**
      * Reverse the migrations.

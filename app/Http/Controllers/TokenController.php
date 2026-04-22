@@ -54,30 +54,19 @@ class TokenController extends Controller
     public function tokensData(Request $request)
     {
         try {
-            Log::info('Tokens data request received', [
-                'filter_type' => $request->input('filter_type'),
-                'date_range' => $request->input('date_range'),
-                'search' => $request->input('search'),
-            ]);
-
-            $request->validate([
-                'filter_type' => 'nullable|in:all,token_applications,approved_applications',
-                'date_range' => 'nullable|string',
-            ]);
-
             return $this->tokenService->getTokensData($request, $this->dataTableService);
         } catch (\Exception $e) {
             Log::error('Error in tokensData: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString());
             return response()->json([
-                'error' => true,
-                'message' => $e->getMessage(),
-                'data' => [],
-                'recordsTotal' => 0,
-                'recordsFiltered' => 0
+                'error'           => true,
+                'message'         => $e->getMessage(),
+                'data'            => [],
+                'recordsTotal'    => 0,
+                'recordsFiltered' => 0,
             ], 500);
         }
     }
+
 
     public function updateStatus(Request $request, string $id)
     {
@@ -328,7 +317,6 @@ class TokenController extends Controller
                 'data' => $token,
                 'message' => 'Token found successfully'
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,
@@ -371,7 +359,6 @@ class TokenController extends Controller
                 'message' => 'Print count updated successfully',
                 'print_count' => $token->print_count
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,

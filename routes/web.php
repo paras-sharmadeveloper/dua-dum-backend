@@ -4,8 +4,9 @@ use App\Http\Controllers\Location\LocationController;
 use App\Http\Controllers\VenueController;
 use App\Http\Controllers\TokenController;
 use App\Http\Controllers\WorkingLadyController;
-use App\Http\Controllers\FacialRecognitionController;
+use App\Http\Controllers\{FacialRecognitionController, SavedFilterController};
 use Illuminate\Support\Facades\Route;
+
 
 
 
@@ -70,6 +71,8 @@ Route::prefix('tokens')->group(function () {
     Route::post('/{id}/status', [TokenController::class, 'updateStatus'])->name('tokens.update-status');
     Route::get('/print', [TokenController::class, 'printPage'])->name('tokens.print');
     Route::post('/search', [TokenController::class, 'searchToken'])->name('tokens.search');
+    // Route::post('/data',                [TokenController::class, 'data'])->name('data');
+
     Route::post('/update-print-count', [TokenController::class, 'updatePrintCount'])->name('tokens.update-print-count');
 });
 
@@ -91,6 +94,11 @@ Route::prefix('facial-recognition')->group(function () {
     Route::get('/manual-mappings', [FacialRecognitionController::class, 'manualMappings'])->name('facial-recognition.manual-mappings');
     Route::get('/users/data', [FacialRecognitionController::class, 'getUsersData'])->name('facial-recognition.users.data');
 });
-
+Route::middleware('auth')->group(function () {
+    Route::get('/saved-filters',          [SavedFilterController::class, 'index']);
+    Route::post('/saved-filters',         [SavedFilterController::class, 'store']);
+    Route::post('/saved-filters/{savedFilter}/default', [SavedFilterController::class, 'setDefault']);
+    Route::delete('/saved-filters/{savedFilter}',       [SavedFilterController::class, 'destroy']);
+});
 
 require __DIR__ . '/auth.php';

@@ -32,7 +32,7 @@ class TokenService
     {
         try {
             $query = Venue::where('status', 'Active')
-                ->select(['id','venue_name','venue_code','venue_address_eng','venue_address_urdu','general_dua_token','general_dum_token','working_lady_dua_token','location_group_id']);
+                ->select(['id', 'venue_name', 'venue_code', 'venue_address_eng', 'venue_address_urdu', 'general_dua_token', 'general_dum_token', 'working_lady_dua_token', 'location_group_id']);
 
             $userCityName = null;
 
@@ -44,7 +44,7 @@ class TokenService
             // If user IP provided, filter by location
             elseif ($userIp) {
                 $userLocation = $this->locationService->getUserLocation($userIp);
-                
+
                 if ($userLocation && isset($userLocation['city'])) {
                     $userCityName = $userLocation['city'];
                     Log::info('Got city from IP geolocation', [
@@ -59,23 +59,23 @@ class TokenService
             // If we have a city name from either test or API, filter venues
             if ($userCityName) {
                 $city = City::where('city_name', 'LIKE', $userCityName)->first();
-                
+
                 if ($city) {
                     $cityId = $city->Id;
-                    
+
                     Log::info('Filtering venues by city', [
                         'city_name' => $userCityName,
                         'city_id' => $cityId
                     ]);
 
                     // Filter venues based on location_groups that contain the user's city ID
-                    $query->whereHas('locationGroup', function($q) use ($cityId) {
+                    $query->whereHas('locationGroup', function ($q) use ($cityId) {
                         $q->where('status', 'Active')
-                          ->where(function($subQuery) use ($cityId) {
-                              // Check if cities column contains the city ID
-                              // Using FIND_IN_SET for comma-separated values
-                              $subQuery->whereRaw("FIND_IN_SET(?, cities) > 0", [$cityId]);
-                          });
+                            ->where(function ($subQuery) use ($cityId) {
+                                // Check if cities column contains the city ID
+                                // Using FIND_IN_SET for comma-separated values
+                                $subQuery->whereRaw("FIND_IN_SET(?, cities) > 0", [$cityId]);
+                            });
                     });
                 } else {
                     Log::warning('City not found in database', [
@@ -86,16 +86,16 @@ class TokenService
             }
 
             $venues = $query->orderBy('venue_name')->get();
-            
+
             Log::info('Venues retrieved', [
                 'count' => $venues->count(),
                 'with_ip_filter' => $userIp !== null
             ]);
 
-            return ['success' => true,'venues' => $venues,'message' => 'Venues retrieved successfully'];
+            return ['success' => true, 'venues' => $venues, 'message' => 'Venues retrieved successfully'];
         } catch (\Exception $e) {
             Log::error('Failed to retrieve venues: ' . $e->getMessage());
-            return ['success' => false,'venues' => [],'message' => 'Failed to retrieve venues'];
+            return ['success' => false, 'venues' => [], 'message' => 'Failed to retrieve venues'];
         }
     }
 
@@ -108,10 +108,10 @@ class TokenService
             $imageName = 'user_' . time() . '_' . uniqid() . '.png';
             $path = 'user_images/' . $imageName;
             Storage::disk('public')->put($path, base64_decode($image));
-            return ['success' => true,'image_path' => $path,'image_name' => $imageName,'message' => 'Image processed successfully'];
+            return ['success' => true, 'image_path' => $path, 'image_name' => $imageName, 'message' => 'Image processed successfully'];
         } catch (\Exception $e) {
             Log::error('Failed to process user image: ' . $e->getMessage());
-            return ['success' => false,'image_path' => null,'message' => 'Failed to process image'];
+            return ['success' => false, 'image_path' => null, 'message' => 'Failed to process image'];
         }
     }
 
@@ -122,10 +122,10 @@ class TokenService
             $qrName = 'qr_' . time() . '_' . uniqid() . '.' . $qrFile->getClientOriginalExtension();
             $path = 'qr_codes/' . $qrName;
             Storage::disk('public')->put($path, file_get_contents($qrFile));
-            return ['success' => true,'qr_path' => $path,'qr_name' => $qrName,'message' => 'QR code processed successfully'];
+            return ['success' => true, 'qr_path' => $path, 'qr_name' => $qrName, 'message' => 'QR code processed successfully'];
         } catch (\Exception $e) {
             Log::error('Failed to process QR code: ' . $e->getMessage());
-            return ['success' => false,'qr_path' => null,'message' => 'Failed to process QR code'];
+            return ['success' => false, 'qr_path' => null, 'message' => 'Failed to process QR code'];
         }
     }
 
@@ -212,20 +212,18 @@ class TokenService
                 ];
 
                 Log::info('Token saved to database successfully', $tokenData);
-                
+
                 // Send image to face recognition API
                 $this->processFaceRecognition($validatedData['user_image'], $validatedData['user_name'], $token->id);
-                
             } catch (\Exception $dbError) {
                 DB::rollBack();
                 throw new \Exception('Failed to save token to database: ' . $dbError->getMessage());
             }
 
-            return ['success' => true,'token_data' => $tokenData,'message' => 'Token generated successfully! You will receive further instructions on your provided phone number.'];
-
+            return ['success' => true, 'token_data' => $tokenData, 'message' => 'Token generated successfully! You will receive further instructions on your provided phone number.'];
         } catch (\Exception $e) {
             Log::error('Token generation failed: ' . $e->getMessage());
-            return ['success' => false,'message' => 'Token generation failed: ' . $e->getMessage()];
+            return ['success' => false, 'message' => 'Token generation failed: ' . $e->getMessage()];
         }
     }
 
@@ -264,7 +262,7 @@ class TokenService
         $date = date('Ymd');
         $tokenCode = "{$venue->venue_code}-{$group->code}-{$serviceType}-{$nextNumber}-{$date}";
 
-        return ['number' => $nextNumber,'code' => $tokenCode,'group_id' => $group->id,'category_id' => $category->id];
+        return ['number' => $nextNumber, 'code' => $tokenCode, 'group_id' => $group->id, 'category_id' => $category->id];
     }
 
     public function checkTokenAvailability($venueId, $userType, $serviceType)
@@ -279,10 +277,10 @@ class TokenService
             } elseif ($serviceType === 'dum') {
                 $availableTokens = $venue->general_dum_token;
             }
-            return ['success' => true,'available' => $availableTokens > 0,'count' => $availableTokens,'message' => $availableTokens > 0 ? 'Tokens available' : 'No tokens available'];
+            return ['success' => true, 'available' => $availableTokens > 0, 'count' => $availableTokens, 'message' => $availableTokens > 0 ? 'Tokens available' : 'No tokens available'];
         } catch (\Exception $e) {
             Log::error('Failed to check token availability: ' . $e->getMessage());
-            return ['success' => false,'available' => false,'message' => 'Failed to check availability'];
+            return ['success' => false, 'available' => false, 'message' => 'Failed to check availability'];
         }
     }
 
@@ -299,7 +297,7 @@ class TokenService
             // If user type is provided, filter by it
             if ($userType) {
                 $groupCode = $userType === 'normal_person' ? 'NP' : 'WL';
-                $query->whereHas('venueCategoryGroup', function($q) use ($groupCode) {
+                $query->whereHas('venueCategoryGroup', function ($q) use ($groupCode) {
                     $q->where('code', $groupCode);
                 });
             }
@@ -310,7 +308,7 @@ class TokenService
                 'venue_id' => $venueId,
                 'user_type' => $userType,
                 'counters_count' => $counters->count(),
-                'counters' => $counters->map(function($c) {
+                'counters' => $counters->map(function ($c) {
                     return [
                         'group_code' => $c->venueCategoryGroup ? $c->venueCategoryGroup->code : null,
                         'group_name' => $c->venueCategoryGroup ? $c->venueCategoryGroup->name : null,
@@ -384,7 +382,7 @@ class TokenService
     /**
      * Build tokens datatable data via service (controller remains thin)
      */
-    public function getTokensData(Request $request, DatatableService $dataTableService)
+    public function DOlgetTokensData(Request $request, DatatableService $dataTableService)
     {
         try {
             $query = DB::table('tokens')
@@ -404,17 +402,17 @@ class TokenService
                     'tokens.status',
                     DB::raw('CAST(tokens.created_at AS CHAR) as created_at'),
                 ])->orderBy('tokens.created_at', 'desc');
-            
+
             // Apply status filter based on filter_type
             $filterType = $request->input('filter_type', 'all');
             Log::info('Filter type: ' . $filterType);
-            
+
             if ($filterType === 'token_applications') {
                 $query->whereIn('tokens.status', ['Pending', 'Disapproved']);
             } elseif ($filterType === 'approved_applications') {
                 $query->where('tokens.status', 'Approved');
             }
-            
+
             // Apply date range filter
             $dateRange = $request->input('date_range');
             if ($dateRange) {
@@ -441,6 +439,152 @@ class TokenService
                 ['name' => 'last_phone_date', 'searchable' => false],
                 ['name' => 'tokens.status', 'searchable' => true],
                 ['name' => 'tokens.created_at', 'searchable' => false],
+            ];
+
+            return $dataTableService->getDataTableData($request, $query, $columns);
+        } catch (\Exception $e) {
+            Log::error('Error in getTokensData: ' . $e->getMessage());
+            Log::error('Stack trace: ' . $e->getTraceAsString());
+            throw $e;
+        }
+    }
+    public function getTokensData(Request $request, DatatableService $dataTableService)
+    {
+        try {
+            $query = DB::table('tokens')
+                ->leftJoin('venues', 'tokens.venue_id', '=', 'venues.id')
+                ->select([
+                    'tokens.id',
+                    'tokens.token_code',
+                    'tokens.token_number',
+                    'venues.venue_name as venue',
+                    'tokens.user_type',
+                    'tokens.service_type',
+                    'tokens.user_name',
+                    'tokens.city',
+                    'tokens.user_image_path',
+                    'tokens.phone_number',
+                    DB::raw('(SELECT MAX(t2.created_at) FROM tokens t2 WHERE t2.phone_number = tokens.phone_number) as last_phone_date'),
+                    'tokens.status',
+                    DB::raw('CAST(tokens.created_at AS CHAR) as created_at'),
+                ])
+                ->orderBy('tokens.created_at', 'desc');
+
+            // ── Application Type ──────────────────────────
+            $filterType = $request->input('filter_type', 'all');
+            if ($filterType === 'token_applications') {
+                $query->whereIn('tokens.status', ['Pending', 'Disapproved']);
+            } elseif ($filterType === 'approved_applications') {
+                $query->where('tokens.status', 'Approved');
+            }
+
+            // ── Token Status ──────────────────────────────
+            if ($request->filter_status) {
+                $query->where('tokens.status', $request->filter_status);
+            }
+
+            // ── User Type ─────────────────────────────────
+            if ($request->filter_user_type) {
+                $query->where('tokens.user_type', $request->filter_user_type);
+            }
+
+            // ── Service Type ──────────────────────────────
+            if ($request->filter_service_type) {
+                $query->where('tokens.service_type', $request->filter_service_type);
+            }
+
+            // ── Venue ─────────────────────────────────────
+            if ($request->filter_venue) {
+                $query->where('tokens.venue_id', $request->filter_venue);
+            }
+
+            // ── Token Code ────────────────────────────────
+            if ($request->filter_token_code) {
+                $query->where('tokens.token_code', 'like', '%' . $request->filter_token_code . '%');
+            }
+
+            // ── Token Number ──────────────────────────────
+            if ($request->filter_token_number) {
+                $query->where('tokens.token_number', 'like', '%' . $request->filter_token_number . '%');
+            }
+
+            // ── Name ──────────────────────────────────────
+            if ($request->filter_name) {
+                $query->where('tokens.user_name', 'like', '%' . $request->filter_name . '%');
+            }
+
+            // ── City ──────────────────────────────────────
+            if ($request->filter_city) {
+                $query->where('tokens.city', 'like', '%' . $request->filter_city . '%');
+            }
+
+            // ── Phone ─────────────────────────────────────
+            if ($request->filter_phone) {
+                $query->where('tokens.phone_number', 'like', '%' . $request->filter_phone . '%');
+            }
+
+            // ── Has Photo ─────────────────────────────────
+            if ($request->filter_has_photo === 'yes') {
+                $query->whereNotNull('tokens.user_image_path')
+                    ->where('tokens.user_image_path', '!=', '');
+            } elseif ($request->filter_has_photo === 'no') {
+                $query->where(function ($q) {
+                    $q->whereNull('tokens.user_image_path')
+                        ->orWhere('tokens.user_image_path', '');
+                });
+            }
+
+            // ── Created At Date Range ─────────────────────
+            $filterCreatedAt = $request->input('filter_created_at');
+            if ($filterCreatedAt) {
+                $parts = explode(' - ', $filterCreatedAt);
+                if (count($parts) === 2) {
+                    $query->whereBetween('tokens.created_at', [
+                        trim($parts[0]),
+                        trim($parts[1])
+                    ]);
+                }
+            }
+
+            // ── Last Phone Date Range ─────────────────────
+            $filterLastPhone = $request->input('filter_last_phone');
+            if ($filterLastPhone) {
+                $parts = explode(' - ', $filterLastPhone);
+                if (count($parts) === 2) {
+                    // Subquery filter on last_phone_date
+                    $query->havingRaw('last_phone_date BETWEEN ? AND ?', [
+                        trim($parts[0]),
+                        trim($parts[1])
+                    ]);
+                }
+            }
+
+            // ── Old date_range (backward compat) ─────────
+            $dateRange = $request->input('date_range');
+            if ($dateRange && !$filterCreatedAt) {
+                $dates = explode(' - ', $dateRange);
+                if (count($dates) === 2) {
+                    $query->whereBetween('tokens.created_at', [
+                        trim($dates[0]),
+                        trim($dates[1])
+                    ]);
+                }
+            }
+
+            $columns = [
+                ['name' => 'tokens.id',           'searchable' => true],
+                ['name' => 'tokens.token_code',   'searchable' => true],
+                ['name' => 'tokens.token_number', 'searchable' => true],
+                ['name' => 'venues.venue_name',   'searchable' => true],
+                ['name' => 'tokens.user_type',    'searchable' => true],
+                ['name' => 'tokens.service_type', 'searchable' => true],
+                ['name' => 'tokens.user_name',    'searchable' => true],
+                ['name' => 'tokens.city',         'searchable' => true],
+                ['name' => 'user_image_path',     'searchable' => false],
+                ['name' => 'tokens.phone_number', 'searchable' => true],
+                ['name' => 'last_phone_date',     'searchable' => false],
+                ['name' => 'tokens.status',       'searchable' => true],
+                ['name' => 'tokens.created_at',   'searchable' => false],
             ];
 
             return $dataTableService->getDataTableData($request, $query, $columns);
@@ -554,7 +698,7 @@ class TokenService
                 $text = $qrcode->text();
                 return $text ?: null;
             }
-            
+
             // Fallback: Try to use command line tool if available
             if (function_exists('shell_exec')) {
                 // Try using zbarimg if installed
@@ -563,10 +707,9 @@ class TokenService
                     return trim($output);
                 }
             }
-            
+
             Log::warning('No QR decoder library available. Please install zxing/zxing or khanamiryan/qrcode-detector-decoder');
             return null;
-            
         } catch (\Exception $e) {
             Log::error('Error extracting ID from QR: ' . $e->getMessage());
             return null;
@@ -585,7 +728,7 @@ class TokenService
         try {
             // Always use userImage as imagePath
             $imagePath = $userImage;
-            
+
             // Extract base64 if image is stored as data URI
             $imageBase64 = $userImage;
             if (strpos($userImage, 'data:image') === 0) {
@@ -604,7 +747,6 @@ class TokenService
 
             // Call face recognition service with image path
             $this->faceRecognitionService->recognizeFace($imageBase64, $userName, $tokenId, $imagePath);
-            
         } catch (\Exception $e) {
             Log::error('Face recognition processing failed: ' . $e->getMessage());
             // Don't throw - face recognition failure shouldn't stop token creation

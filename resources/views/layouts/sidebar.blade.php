@@ -4,11 +4,12 @@
     <!--begin::Logo-->
     <div class="app-sidebar-logo px-6" id="kt_app_sidebar_logo">
         <!--begin::Logo image-->
-        <a href="../../demo1/dist/index.html">
-            <img alt="Logo" src="{{ asset('assets/media/logos/default-dark.svg') }}"
+        <a href="{{ route('dashboard') }}">
+            <span> BOOK DUA Token
+                {{-- <img alt="Logo" src="{{ asset('assets/media/logos/default-dark.svg') }}"
                 class="h-25px app-sidebar-logo-default" />
             <img alt="Logo" src="{{ asset('assets/media/logos/default-small.svg') }}"
-                class="h-20px app-sidebar-logo-minimize" />
+                class="h-20px app-sidebar-logo-minimize" /> --}}
         </a>
         <!--end::Logo image-->
         <!--begin::Sidebar toggle-->
@@ -18,7 +19,8 @@
             data-kt-toggle-name="app-sidebar-minimize">
             <!--begin::Svg Icon | path: icons/duotune/arrows/arr079.svg-->
             <span class="svg-icon svg-icon-2 rotate-180">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                    xmlns="http://www.w3.org/2000/svg">
                     <path opacity="0.5"
                         d="M14.2657 11.4343L18.45 7.25C18.8642 6.83579 18.8642 6.16421 18.45 5.75C18.0358 5.33579 17.3642 5.33579 16.95 5.75L11.4071 11.2929C11.0166 11.6834 11.0166 12.3166 11.4071 12.7071L16.95 18.25C17.3642 18.6642 18.0358 18.6642 18.45 18.25C18.8642 17.8358 18.8642 17.1642 18.45 16.75L14.2657 12.5657C13.9533 12.2533 13.9533 11.7467 14.2657 11.4343Z"
                         fill="currentColor" />
@@ -54,11 +56,10 @@
                 </div>
 
                 <!-- User Management -->
-                <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ 
-                        request()->routeIs('role.*') ||
-    request()->routeIs('permission.*') ||
-    request()->routeIs('users.*') ? 'here show' : '' 
-                    }}">
+                <div data-kt-menu-trigger="click"
+                    class="menu-item menu-accordion {{ request()->routeIs('role.*') || request()->routeIs('permission.*') || request()->routeIs('users.*')
+                        ? 'here show'
+                        : '' }}">
                     <span class="menu-link">
                         <span class="menu-icon">
                             <!-- SVG icon -->
@@ -98,10 +99,8 @@
                 </div>
 
                 <!-- Venue Management -->
-                <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ 
-        request()->routeIs('venue.*') ||
-    request()->routeIs('location.*') ? 'here show' : '' 
-    }}">
+                <div data-kt-menu-trigger="click"
+                    class="menu-item menu-accordion {{ request()->routeIs('venue.*') || request()->routeIs('location.*') ? 'here show' : '' }}">
                     <span class="menu-link">
                         <span class="menu-icon">
                             <!-- SVG icon -->
@@ -134,7 +133,8 @@
 
                 <!-- Tokens -->
                 <div class="menu-item">
-                    <a class="menu-link {{ request()->routeIs('tokens.*') ? 'active' : '' }}" href="{{ route('tokens.index') }}">
+                    <a class="menu-link {{ request()->routeIs('tokens.*') ? 'active' : '' }}"
+                        href="{{ route('tokens.index') }}">
                         <span class="menu-icon">
                             <!-- SVG icon -->
                         </span>
@@ -144,7 +144,8 @@
 
                 <!-- Working Ladies -->
                 <div class="menu-item">
-                    <a class="menu-link {{ request()->routeIs('working-lady.*') ? 'active' : '' }}" href="{{ route('working-lady.index') }}">
+                    <a class="menu-link {{ request()->routeIs('working-lady.*') ? 'active' : '' }}"
+                        href="{{ route('working-lady.index') }}">
                         <span class="menu-icon">
                             <!-- SVG icon -->
                         </span>
@@ -154,7 +155,8 @@
 
                 <!-- Site Admin -->
                 <div class="menu-item">
-                    <a class="menu-link {{ request()->routeIs('tokens.print') ? 'active' : '' }}" href="{{ route('tokens.print') }}">
+                    <a class="menu-link {{ request()->routeIs('tokens.print') ? 'active' : '' }}"
+                        href="{{ route('tokens.print') }}">
                         <span class="menu-icon">
                             <!-- SVG icon -->
                         </span>
@@ -163,9 +165,8 @@
                 </div>
 
                 <!-- Facial Recognition -->
-                <div data-kt-menu-trigger="click" class="menu-item menu-accordion {{ 
-                        request()->routeIs('facial-recognition.*') ? 'here show' : '' 
-                    }}">
+                <div data-kt-menu-trigger="click"
+                    class="menu-item menu-accordion {{ request()->routeIs('facial-recognition.*') ? 'here show' : '' }}">
                     <span class="menu-link">
                         <span class="menu-icon">
                             <!-- SVG icon -->
@@ -226,7 +227,7 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         // Find all active menu items and ensure their parents are expanded
         document.querySelectorAll('.menu-link.active').forEach(activeItem => {
             let parentAccordion = activeItem.closest('.menu-accordion');
