@@ -22,7 +22,17 @@ class AuthController extends Controller
     {
         return view('auth.login');
     }
+    // AuthController.php mein add karo
 
+    public function dashboardStats()
+    {
+        return response()->json([
+            'total_tokens'    => \App\Models\Token::count(),
+            'pending_tokens'  => \App\Models\Token::where('status', 'pending')->count(),
+            'active_venues'   => \App\Models\Venue::where('status', 'active')->count(),
+            'working_ladies'  => \App\Models\WorkingLady::count(),
+        ]);
+    }
     // login
     public function login(Request $request)
     {

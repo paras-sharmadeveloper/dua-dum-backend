@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\Request;
 use App\Services\Auth\UserService;
 use Illuminate\Support\Facades\Log;
 use App\Services\HelperServices\DataTableService;
+
 class UserController extends Controller
 {
     protected $dataTableService;
@@ -21,10 +23,48 @@ class UserController extends Controller
     /**
      * Display users listing
      */
-    public function index()
+    public function index(Request $request)
     {
-        return view("user.index");
+        try {
+            $query = User::with('roles');
+
+            // Search
+            if ($request->search) {
+                $query->where(function ($q) use ($request) {
+                    $q->where('name', 'like', "%{$request->search}%")
+                        ->orWhere('email', 'like', "%{$request->search}%");
+                });
+            }
+
+            // Status filter
+            if ($request->status) {
+                $query->where('status', $request->status);
+            }
+
+            $perPage = $request->per_page ?? 10;
+            $users   = $query->latest()->paginate($perPage);
+
+            // Format response
+            $users->getCollection()->transform(function ($user) {
+                return [
+                    'id'     => $user->id,
+                    'name'   => $user->name,
+                    'email'  => $user->email,
+                    'role'   => $user->roles->first()?->name ?? 'N/A',
+                    'status' => $user->status,
+                ];
+            });
+
+            return response()->json($users);
+        } catch (\Exception $e) {
+            Log::error('Users index error: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to load users'], 500);
+        }
     }
+    // public function index()
+    // {
+    //     return view("user.index");
+    // }
 
     /**
      * Get all users data for DataTable

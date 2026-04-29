@@ -28,20 +28,75 @@ class TokenController extends Controller
         $this->dataTableService = $dataTableService;
     }
 
-    // Registration stepper view
-    public function index(Request $request, $locale = '')
+    // Tokens list — API ke liye
+    public function index(Request $request)
     {
-        $isMobile = $this->deviceIdentificationService->isMobileDevice($request);
-        if ($locale) {
-            App::setLocale($locale);
-        } else {
-            App::setLocale('en');
+        try {
+            $query = Token::with('venue');
+
+            // Filters
+            if ($request->status)     $query->where('status', $request->status);
+            if ($request->user_type)  $query->where('user_type', $request->user_type);
+            if ($request->service)    $query->where('service_type', $request->service);
+            if ($request->venue)      $query->whereHas('venue', fn($q) => $q->where('name', $request->venue));
+            if ($request->token_code) $query->where('token_code', 'like', "%{$request->token_code}%");
+            if ($request->token_num)  $query->where('token_number', $request->token_num);
+            if ($request->name)       $query->where('name', 'like', "%{$request->name}%");
+            if ($request->city)       $query->where('city', 'like', "%{$request->city}%");
+            if ($request->phone)      $query->where('phone_number', 'like', "%{$request->phone}%");
+            if ($request->from)       $query->whereDate('created_at', '>=', $request->from);
+            if ($request->to)         $query->whereDate('created_at', '<=', $request->to);
+
+            $perPage = $request->per_page ?? 10;
+            $tokens  = $query->latest()->paginate($perPage);
+
+            return response()->json($tokens);
+        } catch (\Exception $e) {
+            Log::error('Tokens index error: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to load tokens'], 500);
         }
-        if (!$isMobile) {
-            return view('token.error');
-        }
-        return view('token.index', compact('locale'));
     }
+
+    // Approve token
+    public function approve(string $id)
+    {
+        try {
+            $token = Token::findOrFail($id);
+            $token->update(['status' => 'Approved']);
+            return response()->json(['message' => 'Token approved', 'data' => $token]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to approve token'], 500);
+        }
+    }
+
+    // Reject token
+    public function reject(Request $request, string $id)
+    {
+        try {
+            $token = Token::findOrFail($id);
+            $token->update([
+                'status'           => 'Disapproved',
+                'rejection_reason' => $request->reason,
+            ]);
+            return response()->json(['message' => 'Token rejected', 'data' => $token]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to reject token'], 500);
+        }
+    }
+
+    // public function index(Request $request, $locale = '')
+    // {
+    //     $isMobile = $this->deviceIdentificationService->isMobileDevice($request);
+    //     if ($locale) {
+    //         App::setLocale($locale);
+    //     } else {
+    //         App::setLocale('en');
+    //     }
+    //     if (!$isMobile) {
+    //         return view('token.error');
+    //     }
+    //     return view('token.index', compact('locale'));
+    // }
 
     // Tokens list view
     public function tokensIndex()

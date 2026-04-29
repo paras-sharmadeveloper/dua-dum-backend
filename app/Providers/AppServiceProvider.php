@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Services\UserService;
+use App\Services\Auth\UserService as AuthUserService;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,6 +13,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+
         //
     }
 
