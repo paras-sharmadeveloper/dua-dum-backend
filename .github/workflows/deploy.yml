@@ -11,18 +11,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ── PHP Setup ──
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: "8.4" # 8.2 → 8.4
+          php-version: "8.4"
           extensions: mbstring, bcmath, pdo, pdo_mysql, tokenizer, xml, ctype, json
 
-      # ── Composer Install ──
       - name: Composer Install
         run: composer install --no-dev --optimize-autoloader --no-interaction
 
-      # ── Deploy via FTP ──
       - name: Deploy via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.3.4
         with:
@@ -30,27 +27,14 @@ jobs:
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./
+          server-dir: ${{ secrets.FTP_SERVER_DIR }}
           exclude: |
             **/.git*
-               **/.git*/**
-               **/node_modules/**
-               **/vendor/**
-               **/tests/**
-               .env
-               .env.example
-               README.md
-               *.md
-      # ── SSH: Migrate + Cache ──
-      - name: Remote Commands via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          password: ${{ secrets.SSH_PASSWORD }}
-          script: |
-            cd ${{ secrets.SSH_PROJECT_PATH }}
-            php artisan migrate --force
-            php artisan config:cache
-            php artisan route:cache
-            php artisan view:cache
-            php artisan storage:link
+            **/.git*/**
+            **/node_modules/**
+            **/vendor/**
+            **/tests/**
+            .env
+            .env.example
+            README.md
+            *.md
