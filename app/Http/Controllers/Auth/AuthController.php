@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\DTOs\Auth\LoginDTO;
 use App\Services\Auth\AuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
 
 class AuthController extends Controller
 {
@@ -21,23 +23,39 @@ class AuthController extends Controller
         return view('auth.login');
     }
 
+    // login
     public function login(Request $request)
     {
+        $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required',
+        ]);
 
-        $dto = LoginDTO::fromLoginRequest($request);
-
-        $result = $this->authService->login($dto);
-
-        if ($result) {
-            return redirect()->intended('/dashboard');
+        if (!Auth::attempt($request->only('email', 'password'))) {
+            return response()->json([
+                'message' => 'Invalid credentials'
+            ], 401);
         }
 
-        return back()->withErrors(['email' => 'Invalid credentials']);
+        $user  = Auth::user();
+        $token = $user->createToken('api-token')->plainTextToken;
+
+        return response()->json([
+            'user'  => $user,
+            'token' => $token,
+        ]);
     }
 
+    // logout
     public function logout(Request $request)
     {
-        $this->authService->logout();
-        return redirect('/');
+        $request->user()->currentAccessToken()->delete();
+        return response()->json(['message' => 'Logged out']);
+    }
+
+    // me
+    public function me(Request $request)
+    {
+        return response()->json($request->user());
     }
 }
