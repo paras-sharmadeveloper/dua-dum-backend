@@ -33,14 +33,14 @@ jobs:
           server-dir: "./"
           exclude: |
             **/.git*
-            **/.git*/**
-            **/node_modules/**
-            **/tests/**
-            .env
-            .env.example
-            README.md
-            *.md
-
+               **/.git*/**
+               **/node_modules/**
+               **/vendor/**
+               **/tests/**
+               .env
+               .env.example
+               README.md
+               *.md
       # ── SSH: Migrate + Cache ──
       - name: Remote Commands via SSH
         uses: appleboy/ssh-action@v1
