@@ -2,7 +2,7 @@ name: Deploy Laravel
 
 on:
   push:
-    branches: [Paras-Work]
+    branches: [main]
 
 jobs:
   deploy:
