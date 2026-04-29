@@ -14,7 +14,9 @@ use App\Http\Controllers\SavedFilterController;
 
 // ─── PUBLIC ROUTES ───────────────────────────────────────
 Route::post('/login', [AuthController::class, 'login']);
-
+Route::get('/test', function () {
+    return "running";
+});
 // ─── PROTECTED ROUTES (Sanctum) ──────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
 
