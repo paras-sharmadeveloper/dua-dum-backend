@@ -13,27 +13,31 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required',
-        ]);
+        try {
+            $request->validate([
+                'email'    => 'required|email',
+                'password' => 'required',
+            ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            return response()->json(['message' => 'Invalid credentials'], 401);
+            if (!Auth::attempt($request->only('email', 'password'))) {
+                return response()->json(['message' => 'Invalid credentials'], 401);
+            }
+
+            $user  = Auth::user();
+            $token = $user->createToken('api-token')->plainTextToken;
+
+            return response()->json([
+                'user'  => [
+                    'id'    => $user->id,
+                    'name'  => $user->name,
+                    'email' => $user->email,
+                    'role'  => $user->roles->first()?->name ?? 'admin',
+                ],
+                'token' => $token,
+            ]);
+        } catch (\Throwable $th) {
+            return response()->json(['message' => 'Login failed', 'error' => $th->getMessage()], 500);
         }
-
-        $user  = Auth::user();
-        $token = $user->createToken('api-token')->plainTextToken;
-
-        return response()->json([
-            'user'  => [
-                'id'    => $user->id,
-                'name'  => $user->name,
-                'email' => $user->email,
-                'role'  => $user->roles->first()?->name ?? 'admin',
-            ],
-            'token' => $token,
-        ]);
     }
 
     public function logout(Request $request)
