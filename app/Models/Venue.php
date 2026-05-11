@@ -49,18 +49,15 @@ class Venue extends Model
                 $model->id = (string) Str::uuid();
             }
 
-            // Auto-generate venue_code if not provided
             if (empty($model->venue_code)) {
-                $lastVenue = static::orderBy('created_at', 'desc')->first();
-                $lastNumber = 0;
+                // Find the highest existing numeric suffix (e.g. V12 → 12).
+                // Using MAX on the cast value is correct even if records were
+                // deleted or created out of chronological order.
+                $max = static::whereRaw("venue_code REGEXP '^V[0-9]+$'")
+                    ->selectRaw('MAX(CAST(SUBSTRING(venue_code, 2) AS UNSIGNED)) as max_num')
+                    ->value('max_num');
 
-                if ($lastVenue && $lastVenue->venue_code) {
-                    // Extract number from venue_code like "V1", "V2", etc.
-                    preg_match('/V(\d+)/', $lastVenue->venue_code, $matches);
-                    $lastNumber = isset($matches[1]) ? (int) $matches[1] : 0;
-                }
-
-                $model->venue_code = 'V' . ($lastNumber + 1);
+                $model->venue_code = 'V' . ((int) $max + 1);
             }
         });
     }

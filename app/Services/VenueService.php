@@ -171,8 +171,6 @@ class VenueService
                 })
                 ->select([
                     'venues.*',
-                    'venues.venue_name',
-                    'venues.venue_code',
                     'users.name as user_name',
                     'location_groups.name as location_name'
                 ])

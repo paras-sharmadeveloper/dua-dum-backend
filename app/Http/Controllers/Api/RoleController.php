@@ -21,26 +21,11 @@ class RoleController extends Controller
 
     public function index()
     {
-        return view("role.index");
-    }
+        $roles = $this->roleService->getAllRoles()
+            ->withCount('permissions')
+            ->get(['id', 'name']);
 
-    /**
-     * Get all roles data for DataTable
-     */
-    public function getRolesData(Request $request)
-    {
-
-        $query = $this->roleService->getAllRoles();
-        $columns = [
-            ['name' => 'name', 'searchable' => true],
-            ['name' => 'action', 'searchable' => false]
-        ];
-
-        return $this->dataTableService->getDataTableData(
-            $request,
-            $query,
-            $columns
-        );
+        return response()->json($roles);
     }
 
     public function getAllPermissions()
@@ -84,6 +69,20 @@ class RoleController extends Controller
         } else {
             return response()->json(['message' => $result['message']], 422);
         }
+    }
+
+    /**
+     * Delete a role
+     */
+    public function destroy($id)
+    {
+        $result = $this->roleService->deleteRole($id);
+
+        if ($result['success']) {
+            return response()->json(['message' => $result['message']]);
+        }
+
+        return response()->json(['message' => $result['message']], 422);
     }
 
     /**

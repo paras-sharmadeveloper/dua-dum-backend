@@ -170,7 +170,7 @@ class VenueController extends Controller
     {
         try {
             $validated = $request->validate([
-                'status' => 'required|string|in:Active,In Active',
+                'status' => 'required|string|in:Active,Inactive,Paused',
             ]);
 
             $venue = $this->venueService->updateVenueStatus($id, $validated['status']);

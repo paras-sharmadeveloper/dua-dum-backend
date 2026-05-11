@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\WorkingLadyController;
 use App\Http\Controllers\Api\SavedFilterController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\LocationController;
+use App\Http\Controllers\Api\RoleController;
 
 // ─── PUBLIC ──────────────────────────────────────────────
 Route::post('/login', [AuthController::class, 'login']);
@@ -75,6 +76,16 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{id}',                 [LocationController::class, 'show']);
         Route::put('/{id}',                 [LocationController::class, 'update']);
         Route::delete('/{id}',              [LocationController::class, 'destroy']);
+    });
+
+    // Roles & Permissions
+    Route::prefix('roles')->group(function () {
+        Route::get('/permissions',  [RoleController::class, 'getAllPermissions']);
+        Route::get('/',             [RoleController::class, 'index']);
+        Route::post('/',            [RoleController::class, 'store']);
+        Route::get('/{id}',         [RoleController::class, 'getRole']);
+        Route::put('/{id}',         [RoleController::class, 'update']);
+        Route::delete('/{id}',      [RoleController::class, 'destroy']);
     });
 
     // Saved Filters
