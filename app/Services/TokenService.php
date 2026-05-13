@@ -32,7 +32,17 @@ class TokenService
     {
         try {
             $query = Venue::where('status', 'Active')
-                ->select(['id', 'venue_name', 'venue_code', 'venue_address_eng', 'venue_address_urdu', 'general_dua_token', 'general_dum_token', 'working_lady_dua_token', 'location_group_id']);
+                ->with(['duaReason', 'dumReason', 'wlReason'])
+                ->select([
+                    'id', 'venue_name', 'venue_code',
+                    'venue_address_eng', 'venue_address_urdu',
+                    'general_dua_token', 'general_dum_token', 'working_lady_dua_token',
+                    'location_group_id',
+                    'start_date', 'end_date',
+                    'dua_reason', 'dum_reason',
+                    'dua_reason_id', 'dum_reason_id', 'wl_reason_id',
+                    'status_page_note_eng', 'status_page_note_urdu',
+                ]);
 
             $userCityName = null;
 
@@ -85,7 +95,31 @@ class TokenService
                 }
             }
 
-            $venues = $query->orderBy('venue_name')->get();
+            $venues = $query->orderBy('venue_name')->get()->map(function ($v) {
+                return [
+                    'id'                    => $v->id,
+                    'venue_name'            => $v->venue_name,
+                    'venue_code'            => $v->venue_code,
+                    'venue_address_eng'     => $v->venue_address_eng,
+                    'venue_address_urdu'    => $v->venue_address_urdu,
+                    'general_dua_token'     => $v->general_dua_token,
+                    'general_dum_token'     => $v->general_dum_token,
+                    'working_lady_dua_token'=> $v->working_lady_dua_token,
+                    'start_date'            => $v->start_date?->toIso8601String(),
+                    'end_date'              => $v->end_date?->toIso8601String(),
+                    'status_page_note_eng'  => $v->status_page_note_eng,
+                    'status_page_note_urdu' => $v->status_page_note_urdu,
+                    'dua_reason'            => $v->duaReason
+                        ? ['id' => $v->duaReason->id, 'label' => $v->duaReason->label, 'description_en' => $v->duaReason->description_en, 'description_ur' => $v->duaReason->description_ur]
+                        : null,
+                    'dum_reason'            => $v->dumReason
+                        ? ['id' => $v->dumReason->id, 'label' => $v->dumReason->label, 'description_en' => $v->dumReason->description_en, 'description_ur' => $v->dumReason->description_ur]
+                        : null,
+                    'wl_reason'             => $v->wlReason
+                        ? ['id' => $v->wlReason->id, 'label' => $v->wlReason->label, 'description_en' => $v->wlReason->description_en, 'description_ur' => $v->wlReason->description_ur]
+                        : null,
+                ];
+            });
 
             Log::info('Venues retrieved', [
                 'count' => $venues->count(),
@@ -106,8 +140,8 @@ class TokenService
             $image = preg_replace('/^data:image\/\w+;base64,/', '', $imageData);
             $image = str_replace(' ', '+', $image);
             $imageName = 'user_' . time() . '_' . uniqid() . '.png';
-            $path = 'user_images/' . $imageName;
-            Storage::disk('public')->put($path, base64_decode($image));
+            $path = 'bookdua-v2/user_images/' . $imageName;
+            Storage::disk('s3')->put($path, base64_decode($image));
             return ['success' => true, 'image_path' => $path, 'image_name' => $imageName, 'message' => 'Image processed successfully'];
         } catch (\Exception $e) {
             Log::error('Failed to process user image: ' . $e->getMessage());
@@ -120,8 +154,8 @@ class TokenService
         try {
             if (!$qrFile || !$qrFile->isValid()) throw new \Exception('Invalid QR code file');
             $qrName = 'qr_' . time() . '_' . uniqid() . '.' . $qrFile->getClientOriginalExtension();
-            $path = 'qr_codes/' . $qrName;
-            Storage::disk('public')->put($path, file_get_contents($qrFile));
+            $path = 'bookdua-v2/qr_codes/' . $qrName;
+            Storage::disk('s3')->put($path, file_get_contents($qrFile));
             return ['success' => true, 'qr_path' => $path, 'qr_name' => $qrName, 'message' => 'QR code processed successfully'];
         } catch (\Exception $e) {
             Log::error('Failed to process QR code: ' . $e->getMessage());
@@ -653,15 +687,15 @@ class TokenService
                 throw new \Exception('Invalid QR code file');
             }
 
-            // Store QR temporarily for processing
-            $tempPath = $qrFile->store('temp', 'public');
-            $fullPath = Storage::disk('public')->path($tempPath);
+            // Write to system temp dir for processing (never persisted)
+            $fullPath = sys_get_temp_dir() . '/qr_decode_' . uniqid() . '.' . $qrFile->getClientOriginalExtension();
+            file_put_contents($fullPath, file_get_contents($qrFile));
 
             // Try to decode using Zxing PHP library
             $decoded = $this->extractIdFromQR($fullPath);
 
             // Clean up temp file
-            Storage::disk('public')->delete($tempPath);
+            @unlink($fullPath);
 
             if ($decoded) {
                 return [

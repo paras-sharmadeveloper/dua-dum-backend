@@ -40,11 +40,15 @@ class UserService
         try {
             DB::beginTransaction();
 
+            $status = isset($data['status'])
+                ? ($data['status'] ? 'Active' : 'Inactive')
+                : 'Active';
+
             $user = User::create([
                 'name'     => $data['name'],
                 'email'    => $data['email'],
                 'password' => Hash::make($data['password']),
-                'status'   => $data['status'] ?? 'Active',
+                'status'   => $status,
             ]);
 
             if (!empty($data['role'])) {
@@ -91,7 +95,7 @@ class UserService
             ];
 
             if (isset($data['status'])) {
-                $updateData['status'] = $data['status'];
+                $updateData['status'] = $data['status'] ? 'Active' : 'Inactive';
             }
 
             if (!empty($data['password'])) {
@@ -123,7 +127,7 @@ class UserService
             DB::beginTransaction();
 
             $user      = User::findOrFail($id);
-            $newStatus = ($user->status === 'Active') ? 'In Active' : 'Active';
+            $newStatus = ($user->status === 'Active') ? 'Inactive' : 'Active';
             $user->update(['status' => $newStatus]);
 
             DB::commit();

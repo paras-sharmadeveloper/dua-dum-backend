@@ -184,12 +184,14 @@ class VenueService
                 ->selectRaw("COUNT(DISTINCT general_dum_tokens.id) as general_dum_issued")
                 ->selectRaw("COUNT(DISTINCT wl_dua_tokens.id) as wl_dua_issued")
                 ->selectRaw("COUNT(DISTINCT wl_dum_tokens.id) as wl_dum_issued")
-                ->groupBy('venues.id', 'venues.venue_name', 'venues.venue_code', 'users.name', 'location_groups.name', 
+                ->groupBy('venues.id', 'venues.venue_name', 'venues.venue_code', 'users.name', 'location_groups.name',
                          'venues.created_at', 'venues.updated_at', 'venues.start_date', 'venues.end_date',
-                         'venues.user_id', 'venues.location_group_id', 'venues.general_dua_token', 
+                         'venues.user_id', 'venues.location_group_id', 'venues.general_dua_token',
                          'venues.general_dum_token', 'venues.working_lady_dua_token', 'venues.venue_address_eng',
                          'venues.venue_address_urdu', 'venues.status_page_note_eng', 'venues.status_page_note_urdu',
-                         'venues.dua_reason', 'venues.dum_reason', 'venues.status');
+                         'venues.dua_reason', 'venues.dum_reason',
+                         'venues.dua_reason_id', 'venues.dum_reason_id', 'venues.wl_reason_id',
+                         'venues.status', 'venues.google_map_url');
         } catch (\Throwable $th) {
             Log::error('Failed to get venues: ' . $th->getMessage());
             return Venue::query();
@@ -208,8 +210,9 @@ class VenueService
 
             $venue = Venue::findOrFail($id);
             $updateData = $venueDTO->toArray();
-            unset($updateData['id']); // Remove id from update data to preserve original id
-            unset($updateData['status']); // Remove id from update data to preserve original id
+            unset($updateData['id']);
+            unset($updateData['status']);
+            unset($updateData['venue_code']); // auto-generated on create, never changed on update
             $venue->fill($updateData);
             $venue->save();
 

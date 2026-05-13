@@ -7,15 +7,18 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use App\Services\TokenService;
+use App\Services\WhatsAppService;
 use App\Models\Token;
 
 class TokenController extends Controller
 {
     protected $tokenService;
+    protected $whatsAppService;
 
-    public function __construct(TokenService $tokenService)
+    public function __construct(TokenService $tokenService, WhatsAppService $whatsAppService)
     {
-        $this->tokenService = $tokenService;
+        $this->tokenService   = $tokenService;
+        $this->whatsAppService = $whatsAppService;
     }
 
     // List tokens with filters + pagination
@@ -50,8 +53,9 @@ class TokenController extends Controller
     public function approve(string $id): JsonResponse
     {
         try {
-            $token = Token::findOrFail($id);
+            $token = Token::with('venue')->findOrFail($id);
             $token->update(['status' => 'Approved']);
+            $this->whatsAppService->sendTokenApproved($token);
             return response()->json(['message' => 'Token approved successfully', 'data' => $token]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
             return response()->json(['message' => 'Token not found'], 404);
@@ -170,6 +174,19 @@ class TokenController extends Controller
         } catch (\Exception $e) {
             Log::error('Token generation error: ' . $e->getMessage());
             return response()->json(['success' => false, 'message' => 'Token generation failed'], 500);
+        }
+    }
+
+    // Public token detail by UUID (no auth)
+    public function showPublic(string $id): JsonResponse
+    {
+        try {
+            $token = \App\Models\Token::with('venue')->findOrFail($id);
+            return response()->json(['success' => true, 'token' => $token]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
+            return response()->json(['success' => false, 'message' => 'Token not found'], 404);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Failed to load token'], 500);
         }
     }
 

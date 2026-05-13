@@ -39,4 +39,11 @@ return [
         'key' => env('APIIP_KEY'),
     ],
 
+    'twilio' => [
+        'sid'              => env('TWILIO_ACCOUNT_SID'),
+        'token'            => env('TWILIO_AUTH_TOKEN'),
+        'whatsapp_from'    => env('TWILIO_WHATSAPP_PHONE', env('TWILIO_PHONE_WHATSAPP')),
+        'template_sid'     => env('TWILIO_TEMPLATE_SID'),
+    ],
+
 ];

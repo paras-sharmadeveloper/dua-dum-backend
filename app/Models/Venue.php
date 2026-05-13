@@ -25,10 +25,14 @@ class Venue extends Model
         'working_lady_dua_token',
         'venue_address_eng',
         'venue_address_urdu',
+        'google_map_url',
         'status_page_note_eng',
         'status_page_note_urdu',
         'dua_reason',
         'dum_reason',
+        'dua_reason_id',
+        'dum_reason_id',
+        'wl_reason_id',
         'status'
     ];
 
@@ -79,6 +83,21 @@ class Venue extends Model
     public function cities()
     {
         return $this->morphToMany(City::class, 'locationable');
+    }
+
+    public function duaReason()
+    {
+        return $this->belongsTo(NotHappenReason::class, 'dua_reason_id');
+    }
+
+    public function dumReason()
+    {
+        return $this->belongsTo(NotHappenReason::class, 'dum_reason_id');
+    }
+
+    public function wlReason()
+    {
+        return $this->belongsTo(NotHappenReason::class, 'wl_reason_id');
     }
 
     public function user()

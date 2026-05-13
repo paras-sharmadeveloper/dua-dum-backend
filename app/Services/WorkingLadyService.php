@@ -26,6 +26,7 @@ class WorkingLadyService
             'phone_number',
             'case_type',
             'status',
+            'remarks',
             'created_at',
         ]);
     }
@@ -112,8 +113,8 @@ class WorkingLadyService
         try {
             $workingLady = WorkingLady::findOrFail($id);
 
-            if ($workingLady->qr_code_path && Storage::disk('public')->exists($workingLady->qr_code_path)) {
-                Storage::disk('public')->delete($workingLady->qr_code_path);
+            if ($workingLady->qr_code_path && Storage::disk('s3')->exists($workingLady->qr_code_path)) {
+                Storage::disk('s3')->delete($workingLady->qr_code_path);
             }
 
             $workingLady->delete();
@@ -122,6 +123,31 @@ class WorkingLadyService
         } catch (\Exception $e) {
             Log::error('Failed to delete working lady: ' . $e->getMessage());
             return ['success' => false, 'message' => 'Failed to delete working lady: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Upload / replace profile image
+     */
+    public function uploadProfileImage(string $id, $file): array
+    {
+        try {
+            $workingLady = WorkingLady::findOrFail($id);
+
+            // Delete the old image if one exists
+            if ($workingLady->profile_image_path && Storage::disk('s3')->exists($workingLady->profile_image_path)) {
+                Storage::disk('s3')->delete($workingLady->profile_image_path);
+            }
+
+            $path = 'bookdua-v2/working_ladies/profile_images/' . time() . '_' . $file->getClientOriginalName();
+            Storage::disk('s3')->put($path, file_get_contents($file));
+            $workingLady->profile_image_path = $path;
+            $workingLady->save();
+
+            return ['success' => true, 'url' => Storage::disk('s3')->url($path)];
+        } catch (\Exception $e) {
+            Log::error('Failed to upload profile image: ' . $e->getMessage());
+            return ['success' => false, 'message' => 'Failed to upload image'];
         }
     }
 
@@ -148,7 +174,7 @@ class WorkingLadyService
     private function generateQRCode(string $id)
     {
         try {
-            $path = 'qr_codes/working_ladies/working_lady_' . $id . '.png';
+            $path = 'bookdua-v2/qr_codes/working_ladies/working_lady_' . $id . '.png';
 
             $qrImageUrl = 'https://api.qrserver.com/v1/create-qr-code/?' . http_build_query([
                 'size'   => '300x300',
@@ -162,7 +188,7 @@ class WorkingLadyService
                 throw new \Exception('Failed to download QR code from API');
             }
 
-            Storage::disk('public')->put($path, $qrImageContent);
+            Storage::disk('s3')->put($path, $qrImageContent);
 
             return $path;
         } catch (\Exception $e) {

@@ -79,6 +79,10 @@ class VenueController extends Controller
                 'status_page_note_urdu'   => 'required|string',
                 'dua_reason'              => 'nullable|string',
                 'dum_reason'              => 'nullable|string',
+                'dua_reason_id'           => 'nullable|integer|exists:not_happen_reasons,id',
+                'dum_reason_id'           => 'nullable|integer|exists:not_happen_reasons,id',
+                'wl_reason_id'            => 'nullable|integer|exists:not_happen_reasons,id',
+                'google_map_url'          => 'nullable|string|max:1000',
             ]);
 
             $venueDTO = VenueDTO::fromArray(array_merge($validated, [
@@ -134,6 +138,7 @@ class VenueController extends Controller
     {
         try {
             $validated = $request->validate([
+                'venue_name'              => 'required|string|max:255',
                 'user_id'                 => 'required|integer',
                 'start_date'              => 'required|date',
                 'end_date'                => 'required|date|after:start_date',
@@ -147,6 +152,10 @@ class VenueController extends Controller
                 'status_page_note_urdu'   => 'required|string',
                 'dua_reason'              => 'nullable|string',
                 'dum_reason'              => 'nullable|string',
+                'dua_reason_id'           => 'nullable|integer|exists:not_happen_reasons,id',
+                'dum_reason_id'           => 'nullable|integer|exists:not_happen_reasons,id',
+                'wl_reason_id'            => 'nullable|integer|exists:not_happen_reasons,id',
+                'google_map_url'          => 'nullable|string|max:1000',
             ]);
 
             $validated['general_dua_token']      = $validated['general_dua_token'] ?? 0;

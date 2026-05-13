@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class Token extends Model
@@ -32,9 +33,22 @@ class Token extends Model
         'print_count'
     ];
 
+    protected $appends = ['user_image_url'];
+
     protected $casts = [
         'id' => 'string',
     ];
+
+    public function getUserImageUrlAttribute(): ?string
+    {
+        if (!$this->user_image_path) return null;
+
+        if (str_starts_with($this->user_image_path, 'bookdua-v2/')) {
+            return Storage::disk('s3')->temporaryUrl($this->user_image_path, now()->addHours(6));
+        }
+
+        return asset('storage/' . $this->user_image_path);
+    }
 
     protected static function boot()
     {

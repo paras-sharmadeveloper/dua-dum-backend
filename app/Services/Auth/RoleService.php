@@ -59,7 +59,7 @@ class RoleService
     public function getRole($id)
     {
         try {
-            $role = Role::findById($id);
+            $role = Role::findById($id, 'web');
             $rolePermissions = $role->permissions->pluck('id')->toArray();
 
             return [
@@ -80,7 +80,7 @@ class RoleService
         try {
             DB::beginTransaction();
 
-            $role = Role::findById($id);
+            $role = Role::findById($id, 'web');
             $role->update([
                 'name' => $data['name']
             ]);
@@ -115,7 +115,7 @@ class RoleService
         try {
             DB::beginTransaction();
 
-            $role = Role::findById($id);
+            $role = Role::findById($id, 'web');
             $role->delete();
 
             DB::commit();

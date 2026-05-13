@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class WorkingLady extends Model
@@ -26,13 +27,27 @@ class WorkingLady extends Model
         'case_type',
         'status',
         'qr_code_path',
+        'profile_image_path',
     ];
+
+    protected $appends = ['profile_image_url'];
 
     protected $casts = [
         'id' => 'string',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
+
+    public function getProfileImageUrlAttribute(): ?string
+    {
+        if (!$this->profile_image_path) return null;
+
+        if (str_starts_with($this->profile_image_path, 'bookdua-v2/')) {
+            return Storage::disk('s3')->temporaryUrl($this->profile_image_path, now()->addHours(6));
+        }
+
+        return asset('storage/' . $this->profile_image_path);
+    }
 
     protected static function boot()
     {

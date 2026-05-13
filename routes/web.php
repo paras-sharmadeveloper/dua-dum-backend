@@ -63,7 +63,7 @@ Route::prefix('token-registration')->group(function () {
     Route::post('/decode-qr', [TokenController::class, 'decodeQR'])->name('token-registration.decode-qr');
     Route::get('/{locale?}', [TokenController::class, 'index'])->name('token-registration');
 });
-
+Route::get('/dua-token', [TokenController::class, 'index'])->name('tokens.index');
 // Tokens listing
 Route::prefix('tokens')->group(function () {
     Route::get('/', [TokenController::class, 'tokensIndex'])->name('tokens.index');

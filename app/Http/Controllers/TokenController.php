@@ -29,7 +29,7 @@ class TokenController extends Controller
     }
 
     // Tokens list — API ke liye
-    public function index(Request $request)
+    public function index2(Request $request)
     {
         try {
             $query = Token::with('venue');
@@ -84,19 +84,19 @@ class TokenController extends Controller
         }
     }
 
-    // public function index(Request $request, $locale = '')
-    // {
-    //     $isMobile = $this->deviceIdentificationService->isMobileDevice($request);
-    //     if ($locale) {
-    //         App::setLocale($locale);
-    //     } else {
-    //         App::setLocale('en');
-    //     }
-    //     if (!$isMobile) {
-    //         return view('token.error');
-    //     }
-    //     return view('token.index', compact('locale'));
-    // }
+    public function index(Request $request, $locale = '')
+    {
+        $isMobile = $this->deviceIdentificationService->isMobileDevice($request);
+        if ($locale) {
+            App::setLocale($locale);
+        } else {
+            App::setLocale('en');
+        }
+        if (!$isMobile) {
+            return view('token.error');
+        }
+        return view('token.index', compact('locale'));
+    }
 
     // Tokens list view
     public function tokensIndex()
