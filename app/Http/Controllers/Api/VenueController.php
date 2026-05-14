@@ -116,6 +116,7 @@ class VenueController extends Controller
 
             $usedTokens = $this->venueService->getUsedTokenCounts($id);
 
+            $appTz = config('app.timezone', 'Asia/Karachi');
             return response()->json([
                 'data' => array_merge($venue->toArray(), [
                     'used_general_dua_tokens'       => $usedTokens['general_dua'] ?? 0,
@@ -123,8 +124,11 @@ class VenueController extends Controller
                     'used_general_dum_tokens'       => $usedTokens['general_dum'] ?? 0,
                     'location_name'                 => $venue->locationGroup->name ?? 'N/A',
                     'user_name'                     => $venue->user->name ?? 'N/A',
-                    'formatted_start_date'          => $venue->start_date ? date('Y-m-d H:i:s', strtotime($venue->start_date)) : null,
-                    'formatted_end_date'            => $venue->end_date ? date('Y-m-d H:i:s', strtotime($venue->end_date)) : null,
+                    // Return as "YYYY-MM-DD HH:mm:ss" in app timezone so the edit form shows the correct local time
+                    'start_date'                    => $venue->start_date ? $venue->start_date->setTimezone($appTz)->format('Y-m-d H:i:s') : null,
+                    'end_date'                      => $venue->end_date   ? $venue->end_date->setTimezone($appTz)->format('Y-m-d H:i:s')   : null,
+                    'formatted_start_date'          => $venue->start_date ? $venue->start_date->setTimezone($appTz)->format('Y-m-d H:i:s') : null,
+                    'formatted_end_date'            => $venue->end_date   ? $venue->end_date->setTimezone($appTz)->format('Y-m-d H:i:s')   : null,
                 ]),
             ]);
         } catch (\Exception $e) {
