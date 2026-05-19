@@ -19,6 +19,8 @@ class AuthController extends Controller
                 'password' => 'required',
             ]);
 
+            // return response()->json(['message' => $request->all()]);
+
             if (!Auth::attempt($request->only('email', 'password'))) {
                 return response()->json(['message' => 'Invalid credentials'], 401);
             }
