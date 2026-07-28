@@ -178,6 +178,20 @@ class VenueController extends Controller
         }
     }
 
+    // Delete venue
+    public function destroy(string $id): JsonResponse
+    {
+        try {
+            $this->venueService->deleteVenue($id);
+            return response()->json(['message' => 'Venue deleted successfully']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json(['message' => 'Venue not found'], 404);
+        } catch (\Exception $e) {
+            Log::error('Venue delete failed: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to delete venue'], 500);
+        }
+    }
+
     // Update status only
     public function updateStatus(Request $request, string $id): JsonResponse
     {

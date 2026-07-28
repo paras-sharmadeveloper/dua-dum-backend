@@ -52,6 +52,8 @@ class UserController extends Controller
     // Get all roles (for dropdowns)
     public function getAllRoles(): JsonResponse
     {
+
+
         try {
             $result = $this->userService->getAllRoles();
             return response()->json($result);

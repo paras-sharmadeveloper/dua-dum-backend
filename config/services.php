@@ -46,4 +46,8 @@ return [
         'template_sid'     => env('TWILIO_TEMPLATE_SID'),
     ],
 
+    'face_recognition' => [
+        'url' => env('FACE_RECOGNITION_API_URL', 'http://localhost:5000/recognize'),
+    ],
+
 ];

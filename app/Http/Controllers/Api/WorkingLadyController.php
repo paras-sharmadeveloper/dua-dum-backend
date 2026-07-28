@@ -123,9 +123,7 @@ class WorkingLadyController extends Controller
                         'service_type'     => $token->service_type,
                         'status'           => $token->status,
                         'venue_name'       => $token->venue ? $token->venue->venue_name : null,
-                        'user_image_url'   => $token->user_image_path
-                            ? asset('storage/' . $token->user_image_path)
-                            : null,
+                        'user_image_url'   => $token->user_image_url,
                         'checked_in_count' => $token->checked_in_count ?? 0,
                         'created_at'       => $token->created_at?->toDateTimeString(),
                     ];

@@ -4,14 +4,18 @@ namespace App\Services;
 
 use App\Models\FaceRecord;
 use App\Models\FaceRecordDetail;
-use App\Models\Token;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class FaceRecognitionService
 {
-    protected $apiUrl = 'http://localhost:5000/recognize';
+    protected $apiUrl;
+
+    public function __construct()
+    {
+        $this->apiUrl = config('services.face_recognition.url');
+    }
 
     /**
      * Send image to Python API for face recognition
@@ -28,22 +32,44 @@ class FaceRecognitionService
             if ($response->successful()) {
                 $result = $response->json();
                 Log::info('Face recognition response:', $result);
-                
+
                 // Process the response and save to database
                 $this->saveFaceRecognitionResult($result, $userName, $tokenId, $imagePath);
-                
+
                 return $result;
             } else {
                 Log::error('Face recognition API error: ' . $response->body());
-                // Save as "Not Found" if API fails
+                // API failure — no encoding to work with, don't fabricate a face record
                 $this->saveFaceRecognitionResult(['recognized' => false], $userName, $tokenId, $imagePath);
                 return null;
             }
         } catch (\Exception $e) {
             Log::error('Face recognition exception: ' . $e->getMessage());
-            // Save as "Not Found" if exception occurs
             $this->saveFaceRecognitionResult(['recognized' => false], $userName, $tokenId, $imagePath);
             return null;
+        }
+    }
+
+    /**
+     * Look up a person by photo without mutating any data — used by the admin
+     * "search by photo" tool. Returns the raw Python API response.
+     */
+    public function search(string $imageBase64): array
+    {
+        try {
+            $response = Http::timeout(30)->post($this->apiUrl, [
+                'image' => $imageBase64,
+            ]);
+
+            if (!$response->successful()) {
+                Log::error('Face recognition search API error: ' . $response->body());
+                return ['recognized' => false];
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            Log::error('Face recognition search exception: ' . $e->getMessage());
+            return ['recognized' => false];
         }
     }
 
@@ -53,24 +79,29 @@ class FaceRecognitionService
     protected function saveFaceRecognitionResult($result, $userName, $tokenId, $imagePath)
     {
         try {
+            // No encoding means the Python service failed (outage, no face detected,
+            // etc.) rather than genuinely evaluating the photo — skip persistence
+            // entirely instead of fabricating a new FaceRecord for a failed attempt.
+            if (!isset($result['face_encoding'])) {
+                Log::warning('Face recognition result has no encoding, skipping persistence', [
+                    'token_id' => $tokenId,
+                ]);
+                return;
+            }
+
+            $faceEncoding = json_encode($result['face_encoding']);
             $faceRecordId = null;
             $status = 'Not Found';
-            $faceEncoding = null;
-
-            // Always extract face_encoding if available
-            if (isset($result['face_encoding'])) {
-                $faceEncoding = json_encode($result['face_encoding']);
-            }
 
             if (isset($result['recognized']) && $result['recognized'] === true) {
                 // Face was recognized - find or create face record by face_record_id from Python API
                 $faceId = $result['face_record_id'] ?? null;
                 $faceName = $result['name'] ?? $userName;
-                
+
                 if ($faceId) {
                     // Try to find existing face record by face_id
                     $faceRecord = FaceRecord::where('id', $faceId)->first();
-                    
+
                     if ($faceRecord) {
                         // Increment face_count
                         $faceRecord->increment('face_count');
@@ -83,7 +114,7 @@ class FaceRecognitionService
                             'face_count' => 1
                         ]);
                     }
-                    
+
                     $faceRecordId = $faceRecord->id;
                     $status = 'Found';
                 } else {
@@ -95,26 +126,11 @@ class FaceRecognitionService
                         'name' => $faceName,
                         'face_count' => 1
                     ]);
-                    
+
                     $faceRecordId = $faceRecord->id;
                     $status = 'Found';
                 }
-                
-            } elseif (isset($result['created']) && $result['created'] === true) {
-                // New face was created by Python API
-                $faceId = $result['face_record_id'] ?? null;
-                
-                if ($faceId) {
-                    $faceRecord = FaceRecord::create([
-                        'id' => (string) Str::uuid(),
-                        'face_id' => $faceId,
-                        'name' => $userName,
-                        'face_count' => 1
-                    ]);
-                    
-                    $faceRecordId = $faceRecord->id;
-                    $status = 'Found';
-                }
+
             } else {
                 // Face not recognized - create a new face record for this unknown face
                 $newFaceId = (string) Str::uuid();
@@ -124,7 +140,7 @@ class FaceRecognitionService
                     'name' => $userName,
                     'face_count' => 1
                 ]);
-                
+
                 $faceRecordId = $faceRecord->id;
                 $status = 'Not Found';
             }

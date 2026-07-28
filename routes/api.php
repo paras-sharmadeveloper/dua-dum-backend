@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\LocationController;
 use App\Http\Controllers\Api\RoleController;
 use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\ReasonController;
+use App\Http\Controllers\Api\FacialRecognitionController;
 
 // ─── PUBLIC ──────────────────────────────────────────────
 Route::post('/login', [AuthController::class, 'login']);
@@ -70,7 +71,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('users')->group(function () {
         Route::get('/',                     [UserController::class, 'index']);
         Route::post('/',                    [UserController::class, 'store']);
-        Route::get('/roles',                [UserController::class, 'getAllRoles']);
+        //Route::get('/roles',                [UserController::class, 'getAllRoles']);
         Route::get('/{id}',                 [UserController::class, 'show']);
         Route::put('/{id}',                 [UserController::class, 'update']);
         Route::delete('/{id}',              [UserController::class, 'destroy']);
@@ -108,6 +109,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/',                [VenueController::class, 'store'])->middleware('perm:venue-create');
         Route::put('/{id}',             [VenueController::class, 'update'])->middleware('perm:venue-edit');
         Route::patch('/{id}/status',    [VenueController::class, 'updateStatus'])->middleware('perm:venue-edit');
+        Route::delete('/{id}',          [VenueController::class, 'destroy'])->middleware('perm:venue-delete');
     });
 
     // ── Tokens ──────────────────────────────────────────
@@ -144,7 +146,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Users ─────────────────────────────────────────
     Route::prefix('users')->group(function () {
         // Static routes must come before /{id} to avoid being swallowed by the wildcard
-        Route::get('/roles', [UserController::class, 'getAllRoles']);
+        // Route::get('/roles', [UserController::class, 'getAllRoles']);
         Route::middleware('perm:user-list')->group(function () {
             Route::get('/',       [UserController::class, 'index']);
             Route::get('/{id}',   [UserController::class, 'show']);
@@ -179,12 +181,24 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/{id}', [ReasonController::class, 'destroy'])->middleware('perm:reason-delete');
     });
 
+    // ── Facial Recognition ─────────────────────────────
+    Route::prefix('facial-recognition')->group(function () {
+        Route::middleware('perm:facial-recognition-list')->group(function () {
+            Route::get('/records',  [FacialRecognitionController::class, 'records']);
+            Route::get('/logs',     [FacialRecognitionController::class, 'logs']);
+            Route::post('/search',  [FacialRecognitionController::class, 'search']);
+        });
+        Route::get('/tokens',          [FacialRecognitionController::class, 'searchTokens'])->middleware('perm:facial-recognition-mapping');
+        Route::post('/mappings',       [FacialRecognitionController::class, 'storeMapping'])->middleware('perm:facial-recognition-mapping');
+        Route::delete('/records/{id}', [FacialRecognitionController::class, 'destroyRecord'])->middleware('perm:facial-recognition-delete');
+    });
+
     // ── Roles & Permissions ───────────────────────────
     Route::prefix('roles')->group(function () {
         // permissions list needed in role create/edit form
         Route::get('/permissions', [RoleController::class, 'getAllPermissions'])->middleware('perm:role-create');
         Route::middleware('perm:role-list')->group(function () {
-            Route::get('/',       [RoleController::class, 'index']);
+            Route::get('/',       [UserController::class, 'getAllRoles']);
             Route::get('/{id}',   [RoleController::class, 'getRole']);
         });
         Route::post('/',      [RoleController::class, 'store'])->middleware('perm:role-create');

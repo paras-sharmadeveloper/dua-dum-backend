@@ -55,16 +55,11 @@ class Venue extends Model
 
             // Auto-generate venue_code if not provided
             if (empty($model->venue_code)) {
-                $lastVenue = static::orderBy('created_at', 'desc')->first();
-                $lastNumber = 0;
+                $maxNumber = (int) static::whereNotNull('venue_code')
+                    ->selectRaw("MAX(CAST(SUBSTRING(venue_code, 2) AS UNSIGNED)) as max_num")
+                    ->value('max_num');
 
-                if ($lastVenue && $lastVenue->venue_code) {
-                    // Extract number from venue_code like "V1", "V2", etc.
-                    preg_match('/V(\d+)/', $lastVenue->venue_code, $matches);
-                    $lastNumber = isset($matches[1]) ? (int) $matches[1] : 0;
-                }
-
-                $model->venue_code = 'V' . ($lastNumber + 1);
+                $model->venue_code = 'V' . ($maxNumber + 1);
             }
         });
     }

@@ -171,8 +171,6 @@ class VenueService
                 })
                 ->select([
                     'venues.*',
-                    'venues.venue_name',
-                    'venues.venue_code',
                     'users.name as user_name',
                     'location_groups.name as location_name'
                 ])
@@ -222,6 +220,20 @@ class VenueService
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to update venue: ' . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    public function deleteVenue(string $id): void
+    {
+        try {
+            DB::beginTransaction();
+            $venue = Venue::findOrFail($id);
+            $venue->delete();
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to delete venue: ' . $e->getMessage());
             throw $e;
         }
     }
