@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\SystemTimezoneDateTime;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -40,8 +41,8 @@ class Venue extends Model
     protected $keyType = 'string'; // Critical for UUIDs
     protected $casts = [
         'id' => 'string', // Ensures UUID stays as string
-        'start_date' => 'datetime',
-        'end_date' => 'datetime',
+        'start_date' => SystemTimezoneDateTime::class,
+        'end_date' => SystemTimezoneDateTime::class,
     ];
 
     protected static function boot()

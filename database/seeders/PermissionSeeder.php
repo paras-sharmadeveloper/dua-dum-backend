@@ -58,6 +58,12 @@ class PermissionSeeder extends Seeder
             'working-lady-edit',
             'working-lady-delete',
 
+            // ── Not-Happen Reasons ────────────────────────
+            'reason-list',
+            'reason-create',
+            'reason-edit',
+            'reason-delete',
+
             // ── Site Admin ────────────────────────────────
             'site-admin',
 
