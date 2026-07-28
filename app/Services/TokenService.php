@@ -15,17 +15,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Services\HelperServices\DatatableService;
 use App\Services\Location\LocationService;
-use App\Services\FaceRecognitionService;
+use App\Jobs\ProcessFaceRecognitionJob;
 
 class TokenService
 {
     protected $locationService;
-    protected $faceRecognitionService;
 
-    public function __construct(LocationService $locationService, FaceRecognitionService $faceRecognitionService)
+    public function __construct(LocationService $locationService)
     {
         $this->locationService = $locationService;
-        $this->faceRecognitionService = $faceRecognitionService;
     }
 
     public function getAvailableVenues(?string $userIp = null, ?string $testCity = null)
@@ -247,8 +245,8 @@ class TokenService
 
                 Log::info('Token saved to database successfully', $tokenData);
 
-                // Send image to face recognition API
-                $this->processFaceRecognition($validatedData['user_image'], $validatedData['user_name'], $token->id);
+                // Queue face recognition instead of blocking the booking response on it
+                ProcessFaceRecognitionJob::dispatch($validatedData['user_image'], $validatedData['user_name'], $token->id);
             } catch (\Exception $dbError) {
                 DB::rollBack();
                 throw new \Exception('Failed to save token to database: ' . $dbError->getMessage());
@@ -750,40 +748,4 @@ class TokenService
         }
     }
 
-    /**
-     * Process face recognition for the token
-     * 
-     * @param string $userImage - Base64 encoded image or file path
-     * @param string $userName - Name from token
-     * @param string $tokenId - Token UUID
-     */
-    protected function processFaceRecognition($userImage, $userName, $tokenId)
-    {
-        try {
-            // Always use userImage as imagePath
-            $imagePath = $userImage;
-
-            // Extract base64 if image is stored as data URI
-            $imageBase64 = $userImage;
-            if (strpos($userImage, 'data:image') === 0) {
-                $imageBase64 = explode(',', $userImage)[1];
-            } elseif (file_exists(storage_path('app/public/' . $userImage))) {
-                // If it's a file path, read and encode it
-                $imageContent = file_get_contents(storage_path('app/public/' . $userImage));
-                $imageBase64 = base64_encode($imageContent);
-            } else {
-                // Assume it's already a path stored in DB
-                if (file_exists(public_path($userImage))) {
-                    $imageContent = file_get_contents(public_path($userImage));
-                    $imageBase64 = base64_encode($imageContent);
-                }
-            }
-
-            // Call face recognition service with image path
-            $this->faceRecognitionService->recognizeFace($imageBase64, $userName, $tokenId, $imagePath);
-        } catch (\Exception $e) {
-            Log::error('Face recognition processing failed: ' . $e->getMessage());
-            // Don't throw - face recognition failure shouldn't stop token creation
-        }
-    }
 }
