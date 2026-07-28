@@ -184,9 +184,10 @@ Route::middleware('auth:sanctum')->group(function () {
     // ── Facial Recognition ─────────────────────────────
     Route::prefix('facial-recognition')->group(function () {
         Route::middleware('perm:facial-recognition-list')->group(function () {
-            Route::get('/records',  [FacialRecognitionController::class, 'records']);
-            Route::get('/logs',     [FacialRecognitionController::class, 'logs']);
-            Route::post('/search',  [FacialRecognitionController::class, 'search']);
+            Route::get('/records',      [FacialRecognitionController::class, 'records']);
+            Route::get('/records/{id}', [FacialRecognitionController::class, 'show']);
+            Route::get('/logs',         [FacialRecognitionController::class, 'logs']);
+            Route::post('/search',      [FacialRecognitionController::class, 'search']);
         });
         Route::get('/tokens',          [FacialRecognitionController::class, 'searchTokens'])->middleware('perm:facial-recognition-mapping');
         Route::post('/mappings',       [FacialRecognitionController::class, 'storeMapping'])->middleware('perm:facial-recognition-mapping');

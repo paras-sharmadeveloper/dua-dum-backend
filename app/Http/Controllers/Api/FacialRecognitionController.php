@@ -192,25 +192,65 @@ class FacialRecognitionController extends Controller
                     'name' => $faceRecord->name,
                     'face_count' => $faceRecord->face_count,
                 ],
-                'history' => $faceRecord->details->map(function ($detail) {
-                    return [
-                        'id' => $detail->id,
-                        'status' => $detail->status,
-                        'created_at' => $detail->created_at,
-                        'token' => $detail->token ? [
-                            'id' => $detail->token->id,
-                            'token_code' => $detail->token->token_code,
-                            'user_name' => $detail->token->user_name,
-                            'phone_number' => $detail->token->phone_number,
-                            'status' => $detail->token->status,
-                        ] : null,
-                    ];
-                }),
+                'history' => $faceRecord->details->map(fn ($detail) => $this->mapHistoryEntry($detail)),
             ]);
         } catch (\Exception $e) {
             Log::error('Facial recognition search error: ' . $e->getMessage());
             return response()->json(['message' => 'Face search failed'], 500);
         }
+    }
+
+    /**
+     * Verification tab — view a single face record's full detection history,
+     * including each visit's photo (via the linked token's uploaded image).
+     */
+    public function show(string $id)
+    {
+        try {
+            $faceRecord = FaceRecord::with(['details' => function ($query) {
+                $query->orderBy('created_at', 'desc');
+            }, 'details.token'])->find($id);
+
+            if (!$faceRecord) {
+                return response()->json(['message' => 'Face record not found'], 404);
+            }
+
+            return response()->json([
+                'data' => [
+                    'id' => $faceRecord->id,
+                    'face_id' => $faceRecord->face_id,
+                    'name' => $faceRecord->name,
+                    'face_count' => $faceRecord->face_count,
+                    'created_at' => $faceRecord->created_at,
+                    'history' => $faceRecord->details->map(fn ($detail) => $this->mapHistoryEntry($detail)),
+                ],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Facial recognition show error: ' . $e->getMessage());
+            return response()->json(['message' => 'Failed to load face record'], 500);
+        }
+    }
+
+    /**
+     * Shared shape for a single detection-history entry, including the visit's
+     * photo (the token's uploaded image — face_record_details.image_path is
+     * never actually populated by either the automatic or manual mapping flow).
+     */
+    protected function mapHistoryEntry(FaceRecordDetail $detail): array
+    {
+        return [
+            'id' => $detail->id,
+            'status' => $detail->status,
+            'created_at' => $detail->created_at,
+            'token' => $detail->token ? [
+                'id' => $detail->token->id,
+                'token_code' => $detail->token->token_code,
+                'user_name' => $detail->token->user_name,
+                'phone_number' => $detail->token->phone_number,
+                'status' => $detail->token->status,
+                'user_image_url' => $detail->token->user_image_url,
+            ] : null,
+        ];
     }
 
     /**
