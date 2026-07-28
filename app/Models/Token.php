@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -44,7 +45,17 @@ class Token extends Model
         if (!$this->user_image_path) return null;
 
         if (str_starts_with($this->user_image_path, 'bookdua-v2/')) {
-            return Storage::disk('s3')->temporaryUrl($this->user_image_path, now()->addHours(6));
+            try {
+                return Storage::disk('s3')->temporaryUrl($this->user_image_path, now()->addHours(6));
+            } catch (\Exception $e) {
+                // A single misconfigured/unreachable S3 disk shouldn't crash every
+                // token listing or the public share page — degrade to no image.
+                Log::error('Failed to generate S3 URL for token image: ' . $e->getMessage(), [
+                    'token_id' => $this->id,
+                    'user_image_path' => $this->user_image_path,
+                ]);
+                return null;
+            }
         }
 
         return asset('storage/' . $this->user_image_path);
