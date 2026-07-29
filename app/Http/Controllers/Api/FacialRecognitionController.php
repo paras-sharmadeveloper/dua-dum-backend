@@ -255,11 +255,18 @@ class FacialRecognitionController extends Controller
 
     /**
      * Delete an enrolled face record (cascades its recognition logs).
+     * The cascaded rows' encodings are also pulled out of the live match
+     * index, so a deleted person's photo stops matching immediately
+     * instead of lingering until the next index rebuild.
      */
     public function destroyRecord(string $id)
     {
         $faceRecord = FaceRecord::findOrFail($id);
+        $faissIds = $faceRecord->details()->pluck('faiss_id')->all();
+
         $faceRecord->delete();
+
+        $this->faceRecognitionService->removeFromIndex($faissIds);
 
         return response()->json(['message' => 'Face record deleted.']);
     }

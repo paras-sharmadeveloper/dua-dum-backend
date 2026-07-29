@@ -47,7 +47,11 @@ return [
     ],
 
     'face_recognition' => [
-        'url' => env('FACE_RECOGNITION_API_URL', 'http://localhost:5000/recognize'),
+        // Served by face-match-tool (FAISS-backed 1:N matching), not the
+        // retired facial-recognition service.
+        'url' => env('FACE_RECOGNITION_API_URL', 'http://localhost:5001/api/recognize'),
+        'index_add_url' => env('FACE_RECOGNITION_INDEX_ADD_URL', 'http://localhost:5001/api/index/add'),
+        'index_remove_url' => env('FACE_RECOGNITION_INDEX_REMOVE_URL', 'http://localhost:5001/api/index/remove'),
     ],
 
 ];

@@ -54,7 +54,7 @@ class MigrateImagesToS3 extends Command
             }
 
             try {
-                Storage::disk('s3')->put($s3Path, file_get_contents($localPath), 'public');
+                Storage::disk('s3')->put($s3Path, file_get_contents($localPath));
                 $token->user_image_path = $s3Path;
                 $token->save();
                 $this->line("  ✓  {$s3Path}");
@@ -91,7 +91,7 @@ class MigrateImagesToS3 extends Command
                         $this->line("  WOULD upload  {$lady->profile_image_path}  →  {$s3Path}");
                     } else {
                         try {
-                            Storage::disk('s3')->put($s3Path, file_get_contents($localPath), 'public');
+                            Storage::disk('s3')->put($s3Path, file_get_contents($localPath));
                             $lady->profile_image_path = $s3Path;
                             $changed = true;
                             $this->line("  ✓  {$s3Path}");
@@ -114,7 +114,7 @@ class MigrateImagesToS3 extends Command
                         $this->line("  WOULD upload  {$lady->qr_code_path}  →  {$s3Path}");
                     } else {
                         try {
-                            Storage::disk('s3')->put($s3Path, file_get_contents($localPath), 'public');
+                            Storage::disk('s3')->put($s3Path, file_get_contents($localPath));
                             $lady->qr_code_path = $s3Path;
                             $changed = true;
                             $this->line("  ✓  {$s3Path}");
