@@ -8,7 +8,7 @@ use App\Http\Controllers\SavedFilterController;
 use Illuminate\Support\Facades\Route;
 
 
-require __DIR__ . '/auth.php';
+// require __DIR__ . '/auth.php';
 
 // Route::get('/test-apiip', function () {
 //     $ip = "67.250.186.196"; // Replace with dynamic IP if needed

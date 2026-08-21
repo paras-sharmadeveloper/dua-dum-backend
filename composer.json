@@ -12,9 +12,11 @@
         "php": "^8.2",
         "khanamiryan/qrcode-detector-decoder": "^2.0",
         "laravel/framework": "^12.0",
+        "laravel/horizon": "^5.48",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.10.1",
         "league/flysystem-aws-s3-v3": "^3.0",
+        "predis/predis": "^3.6",
         "spatie/laravel-permission": "^6.17",
         "twilio/sdk": "^8.11"
     },
