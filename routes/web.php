@@ -8,7 +8,7 @@ use App\Http\Controllers\SavedFilterController;
 use Illuminate\Support\Facades\Route;
 
 
-
+require __DIR__ . '/auth.php';
 
 // Route::get('/test-apiip', function () {
 //     $ip = "67.250.186.196"; // Replace with dynamic IP if needed
@@ -94,5 +94,3 @@ use Illuminate\Support\Facades\Route;
 //     Route::post('/saved-filters/{savedFilter}/default', [SavedFilterController::class, 'setDefault']);
 //     Route::delete('/saved-filters/{savedFilter}',       [SavedFilterController::class, 'destroy']);
 // });
-
-// require __DIR__ . '/auth.php';
