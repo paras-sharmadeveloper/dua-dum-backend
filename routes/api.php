@@ -120,6 +120,7 @@ Route::middleware('auth:sanctum')->group(function () {
         });
         Route::patch('/{id}/approve', [TokenController::class, 'approve'])->middleware('perm:token-edit');
         Route::patch('/{id}/reject',  [TokenController::class, 'reject'])->middleware('perm:token-edit');
+        Route::get('/{id}/face-history', [FacialRecognitionController::class, 'historyForToken'])->middleware('perm:token-edit');
         Route::post('/{id}/print',    [TokenController::class, 'updatePrintCount'])->middleware('perm:token-print');
         // These are also used by admin-side token creation forms
         Route::get('/venues',               [TokenController::class, 'getVenues'])->middleware('perm:token-create');

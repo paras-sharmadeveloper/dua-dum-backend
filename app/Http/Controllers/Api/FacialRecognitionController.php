@@ -232,6 +232,49 @@ class FacialRecognitionController extends Controller
     }
 
     /**
+     * Token review — a token's face-match history, for the admin to see
+     * "has this person come before" while deciding to approve/reject.
+     * Never mutates data. Returns {status: 'pending'} if the async face
+     * match job for this token hasn't finished yet, rather than erroring —
+     * approval isn't blocked on it, so this is a normal, expected state.
+     */
+    public function historyForToken(string $tokenId)
+    {
+        $detail = FaceRecordDetail::where('token_id', $tokenId)->first();
+
+        if (!$detail || !$detail->face_record_id) {
+            return response()->json(['status' => 'pending']);
+        }
+
+        $faceRecord = FaceRecord::with(['details' => function ($query) {
+            $query->orderBy('created_at', 'desc');
+        }, 'details.token'])->find($detail->face_record_id);
+
+        if (!$faceRecord) {
+            return response()->json(['status' => 'pending']);
+        }
+
+        $last30 = $faceRecord->details->filter(fn ($d) => $d->created_at->gte(now()->subDays(30)))->count();
+        $thisMonth = $faceRecord->details->filter(fn ($d) => $d->created_at->isSameMonth(now()))->count();
+
+        return response()->json([
+            'status' => 'ready',
+            'face_record' => [
+                'id' => $faceRecord->id,
+                'face_id' => $faceRecord->face_id,
+                'name' => $faceRecord->name,
+                'face_count' => $faceRecord->face_count,
+            ],
+            'visits_last_30_days' => $last30,
+            'visits_this_month' => $thisMonth,
+            'history' => $faceRecord->details->map(fn ($d) => array_merge(
+                $this->mapHistoryEntry($d),
+                ['is_current' => $d->token_id === $tokenId]
+            )),
+        ]);
+    }
+
+    /**
      * Shared shape for a single detection-history entry, including the visit's
      * photo (the token's uploaded image — face_record_details.image_path is
      * never actually populated by either the automatic or manual mapping flow).

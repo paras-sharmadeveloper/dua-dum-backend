@@ -7,25 +7,40 @@ use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Log;
 use App\Services\TokenService;
-use App\Services\WhatsAppService;
+use App\Jobs\SendTokenApprovedWhatsAppJob;
 use App\Models\Token;
+use App\Models\FaceRecord;
+use App\Models\FaceRecordDetail;
 
 class TokenController extends Controller
 {
     protected $tokenService;
-    protected $whatsAppService;
 
-    public function __construct(TokenService $tokenService, WhatsAppService $whatsAppService)
+    public function __construct(TokenService $tokenService)
     {
-        $this->tokenService   = $tokenService;
-        $this->whatsAppService = $whatsAppService;
+        $this->tokenService = $tokenService;
     }
 
     // List tokens with filters + pagination
     public function index(Request $request): JsonResponse
     {
         try {
-            $query = Token::with('venue');
+            $query = Token::with('venue')->addSelect([
+                // All-time visit count for whichever identity this token's face matched.
+                'face_visit_count' => FaceRecord::query()->select('face_count')
+                    ->join('face_record_details', 'face_record_details.face_record_id', '=', 'face_records.id')
+                    ->whereColumn('face_record_details.token_id', 'tokens.id')
+                    ->limit(1),
+                'face_visits_last_30_days' => FaceRecordDetail::query()->selectRaw('COUNT(*)')
+                    ->join('face_record_details as self_detail', 'self_detail.face_record_id', '=', 'face_record_details.face_record_id')
+                    ->whereColumn('self_detail.token_id', 'tokens.id')
+                    ->where('face_record_details.created_at', '>=', now()->subDays(30)),
+                'face_visits_this_month' => FaceRecordDetail::query()->selectRaw('COUNT(*)')
+                    ->join('face_record_details as self_detail2', 'self_detail2.face_record_id', '=', 'face_record_details.face_record_id')
+                    ->whereColumn('self_detail2.token_id', 'tokens.id')
+                    ->whereYear('face_record_details.created_at', now()->year)
+                    ->whereMonth('face_record_details.created_at', now()->month),
+            ]);
 
             if ($request->status)     $query->where('status', $request->status);
             if ($request->user_type)  $query->where('user_type', $request->user_type);
@@ -55,7 +70,7 @@ class TokenController extends Controller
         try {
             $token = Token::with('venue')->findOrFail($id);
             $token->update(['status' => 'Approved']);
-            $this->whatsAppService->sendTokenApproved($token);
+            SendTokenApprovedWhatsAppJob::dispatch($token->id);
             return response()->json(['message' => 'Token approved successfully', 'data' => $token]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException) {
             return response()->json(['message' => 'Token not found'], 404);

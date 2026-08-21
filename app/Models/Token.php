@@ -81,6 +81,15 @@ class Token extends Model
     }
 
     /**
+     * The face-match record for this token's booking photo, if the async
+     * recognition job has finished (may briefly be null right after booking).
+     */
+    public function faceRecordDetail()
+    {
+        return $this->hasOne(FaceRecordDetail::class, 'token_id');
+    }
+
+    /**
      * Scope for filtering by status
      */
     public function scopeByStatus($query, $status)
