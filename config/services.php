@@ -52,6 +52,8 @@ return [
         'url' => env('FACE_RECOGNITION_API_URL', 'http://localhost:5001/api/recognize'),
         'index_add_url' => env('FACE_RECOGNITION_INDEX_ADD_URL', 'http://localhost:5001/api/index/add'),
         'index_remove_url' => env('FACE_RECOGNITION_INDEX_REMOVE_URL', 'http://localhost:5001/api/index/remove'),
+        'index_status_url' => env('FACE_RECOGNITION_INDEX_STATUS_URL', 'http://localhost:5001/api/index/status'),
+        'index_rebuild_url' => env('FACE_RECOGNITION_INDEX_REBUILD_URL', 'http://localhost:5001/api/index/rebuild'),
     ],
 
 ];

@@ -189,10 +189,12 @@ Route::middleware('auth:sanctum')->group(function () {
             Route::get('/records/{id}', [FacialRecognitionController::class, 'show']);
             Route::get('/logs',         [FacialRecognitionController::class, 'logs']);
             Route::post('/search',      [FacialRecognitionController::class, 'search']);
+            Route::get('/index-status', [FacialRecognitionController::class, 'indexStatus']);
         });
         Route::get('/tokens',          [FacialRecognitionController::class, 'searchTokens'])->middleware('perm:facial-recognition-mapping');
         Route::post('/mappings',       [FacialRecognitionController::class, 'storeMapping'])->middleware('perm:facial-recognition-mapping');
         Route::delete('/records/{id}', [FacialRecognitionController::class, 'destroyRecord'])->middleware('perm:facial-recognition-delete');
+        Route::post('/index-rebuild',  [FacialRecognitionController::class, 'rebuildIndex'])->middleware('perm:facial-recognition-delete');
     });
 
     // ── Roles & Permissions ───────────────────────────

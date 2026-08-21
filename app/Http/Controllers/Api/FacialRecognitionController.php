@@ -297,6 +297,26 @@ class FacialRecognitionController extends Controller
     }
 
     /**
+     * Live FAISS index vector count vs. the DB's encoding count, so an
+     * admin can see whether the two have drifted out of sync.
+     */
+    public function indexStatus()
+    {
+        return response()->json($this->faceRecognitionService->indexStatus());
+    }
+
+    /**
+     * Force the live index to rebuild from the database - fixes drift
+     * (e.g. a booking whose encoding was saved to the DB but never made it
+     * into the live index) without needing server access.
+     */
+    public function rebuildIndex()
+    {
+        $result = $this->faceRecognitionService->rebuildIndex();
+        return response()->json($result, $result['success'] ?? false ? 200 : 500);
+    }
+
+    /**
      * Delete an enrolled face record (cascades its recognition logs).
      * The cascaded rows' encodings are also pulled out of the live match
      * index, so a deleted person's photo stops matching immediately

@@ -199,7 +199,11 @@ return [
     'defaults' => [
         'supervisor-1' => [
             'connection' => 'redis',
-            'queue' => ['default'],
+            // Named per job (ProcessFaceRecognitionJob -> face-recognition,
+            // SendTokenApprovedWhatsAppJob -> whatsapp) instead of the
+            // 'default' bucket, so Horizon's dashboard shows separate
+            // throughput/backlog per job type.
+            'queue' => ['face-recognition', 'whatsapp'],
             'balance' => 'auto',
             'autoScalingStrategy' => 'time',
             'maxProcesses' => 1,

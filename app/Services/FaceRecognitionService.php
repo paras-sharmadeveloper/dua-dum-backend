@@ -14,12 +14,16 @@ class FaceRecognitionService
     protected $apiUrl;
     protected $indexAddUrl;
     protected $indexRemoveUrl;
+    protected $indexStatusUrl;
+    protected $indexRebuildUrl;
 
     public function __construct()
     {
         $this->apiUrl = config('services.face_recognition.url');
         $this->indexAddUrl = config('services.face_recognition.index_add_url');
         $this->indexRemoveUrl = config('services.face_recognition.index_remove_url');
+        $this->indexStatusUrl = config('services.face_recognition.index_status_url');
+        $this->indexRebuildUrl = config('services.face_recognition.index_rebuild_url');
     }
 
     /**
@@ -257,6 +261,46 @@ class FaceRecognitionService
             Log::error('Exception removing encodings from face match index: ' . $e->getMessage(), [
                 'faiss_ids' => $faissIds,
             ]);
+        }
+    }
+
+    /**
+     * Live FAISS index vector count vs. the DB's encoding count - the index
+     * can silently drift out of sync with the database (e.g. an addToIndex()
+     * call above failing during an outage), so this is how an admin
+     * confirms whether that's happened without SSHing into the server.
+     */
+    public function indexStatus(): array
+    {
+        try {
+            $response = Http::timeout(10)->get($this->indexStatusUrl);
+
+            if (!$response->successful()) {
+                return ['error' => 'Face match service returned an error: ' . $response->body()];
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            return ['error' => 'Could not reach face match service: ' . $e->getMessage()];
+        }
+    }
+
+    /**
+     * Force the live index to rebuild from the database - self-service fix
+     * for the drift indexStatus() detects, without needing server access.
+     */
+    public function rebuildIndex(): array
+    {
+        try {
+            $response = Http::timeout(60)->post($this->indexRebuildUrl);
+
+            if (!$response->successful()) {
+                return ['success' => false, 'error' => 'Face match service returned an error: ' . $response->body()];
+            }
+
+            return $response->json();
+        } catch (\Exception $e) {
+            return ['success' => false, 'error' => 'Could not reach face match service: ' . $e->getMessage()];
         }
     }
 }

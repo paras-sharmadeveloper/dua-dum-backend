@@ -18,6 +18,7 @@ class SendTokenApprovedWhatsAppJob implements ShouldQueue
     public int $tries = 3;
     public int $backoff = 10;
     public int $timeout = 30;
+    public string $queue = 'whatsapp';
 
     public function __construct(protected string $tokenId)
     {

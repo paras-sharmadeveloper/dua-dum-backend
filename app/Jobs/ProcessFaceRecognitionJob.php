@@ -17,6 +17,7 @@ class ProcessFaceRecognitionJob implements ShouldQueue
     public int $tries = 3;
     public int $backoff = 10;
     public int $timeout = 60;
+    public string $queue = 'face-recognition';
 
     public function __construct(
         protected string $userImage,
